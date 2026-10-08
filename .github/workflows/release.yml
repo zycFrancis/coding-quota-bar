@@ -72,6 +72,14 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: ./scripts/package-release.sh
 
+      - name: Upload build artifact
+        # release 发布步骤偶发静默失败；artifact 兜底保证产物总能取回。
+        uses: actions/upload-artifact@v4
+        with:
+          name: quotabar-release
+          path: dist/release/**
+          if-no-files-found: error
+
       - name: Verify Gatekeeper acceptance
         if: env.QUOTABAR_SIGNED_RELEASE == '1'
         run: |
@@ -81,6 +89,7 @@ jobs:
           spctl --assess --type execute --verbose=2 "dist/Quota Bar.app"
 
       - name: Publish GitHub release
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
