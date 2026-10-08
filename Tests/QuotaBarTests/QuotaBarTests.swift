@@ -498,14 +498,14 @@ import Testing
     preferences.moveProvider(.deepseek, offset: -1)
     #expect(
         preferences.providerOrder
-            == [.codex, .claude, .deepseek, .kimi, .grok, .gemini]
+            == [.codex, .claude, .kimi, .deepseek, .glm, .grok, .gemini]
     )
 
     preferences.setProvider(.codex, hidden: true)
     preferences.setProvider(.claude, hidden: true)
     preferences.setProvider(.kimi, hidden: true)
     preferences.setProvider(.deepseek, hidden: true)
-    #expect(preferences.visibleProviderOrder == [.deepseek])
+    #expect(preferences.visibleProviderOrder == [.glm])
 
     preferences.setProvider(.kimi, paused: true)
     #expect(preferences.pausedProviders == [.kimi])
@@ -519,12 +519,12 @@ import Testing
     let defaults = try #require(UserDefaults(suiteName: suite))
     defer { defaults.removePersistentDomain(forName: suite) }
 
-    // An install from before Grok and Gemini existed: DeepSeek hidden, the
-    // other three visible, and no record of which providers were known.
+    // An install from before GLM, Grok and Gemini existed: DeepSeek hidden,
+    // the other three visible, and no record of which providers were known.
     defaults.set(["deepseek"], forKey: "hiddenProviders")
 
     let preferences = AppPreferences(defaults: defaults)
-    #expect(preferences.hiddenProviders == [.deepseek, .grok, .gemini])
+    #expect(preferences.hiddenProviders == [.deepseek, .glm, .grok, .gemini])
     #expect(preferences.visibleProviderOrder == [.codex, .claude, .kimi])
 
     // A second launch must not re-hide something the user turned on.
