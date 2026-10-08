@@ -15,9 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Publish 步骤用 git rev-parse 校验 tag 是否存在，
-          # 浅克隆不带 tag ref 会导致重复推 tag 被拒，这里带上 tags。
-          fetch-tags: true
+          # Publish 步骤用 git rev-parse 校验 tag 是否存在；浅克隆不带 tag ref
+          # 会导致重复推 tag 被拒。全量克隆（仓库很小）让 tag refs 齐全。
+          # 注意不能用 fetch-tags: true —— tag 事件触发的 checkout 会与之冲突。
+          fetch-depth: 0
 
       - name: Verify version matches tag
         if: startsWith(github.ref, 'refs/tags/')
