@@ -6,11 +6,12 @@ struct LocalSnapshotBundle: Sendable {
     var codex: ProviderSnapshot
     var claude: ProviderSnapshot
     var kimi: ProviderSnapshot
+    var glm: ProviderSnapshot
     var gemini: ProviderSnapshot
     var grok: ProviderSnapshot
     var deepseek: ProviderSnapshot
 
-    var all: [ProviderSnapshot] { [codex, claude, kimi, gemini, grok, deepseek] }
+    var all: [ProviderSnapshot] { [codex, claude, kimi, glm, gemini, grok, deepseek] }
 }
 
 struct ClaudeDesktopUsage: Sendable {
@@ -28,6 +29,7 @@ enum LocalCollectors {
             codex: collectCodex(processText: processText, language: language),
             claude: collectClaude(processText: processText, language: language),
             kimi: collectKimi(processText: processText, language: language),
+            glm: collectGlm(language: language),
             gemini: collectGemini(processText: processText, language: language),
             grok: collectGrok(processText: processText, language: language),
             deepseek: collectDeepSeek(processText: processText, language: language)
@@ -758,6 +760,31 @@ enum LocalCollectors {
             lastUpdated: modified,
             setupAvailable: false,
             isInstalled: true
+        )
+    }
+
+    /// GLM Coding Plan：纯远程 provider，无本地工作状态可采；
+    /// 有凭证即视为已安装，凭证来源见 GlmCredentialStore。
+    private static func collectGlm(language: AppLanguage) -> ProviderSnapshot {
+        let keyConfigured = GlmCredentialStore.hasCredential()
+        let installed = keyConfigured || fm.fileExists(atPath: home.appending(path: ".zai").path)
+
+        let detail = keyConfigured
+            ? language.text("等待同步 GLM Coding Plan 额度", "Waiting to sync GLM Coding Plan quota")
+            : language.text(
+                "未发现 GLM 凭证（ZAI_CODING_CN_API_KEY）",
+                "GLM credential not found (ZAI_CODING_CN_API_KEY)"
+            )
+
+        return ProviderSnapshot(
+            id: .glm,
+            activity: keyConfigured ? .connected : .offline,
+            limits: [],
+            detail: detail,
+            source: language.text("open.bigmodel.cn · 官方额度接口", "open.bigmodel.cn · official quota API"),
+            lastUpdated: nil,
+            setupAvailable: false,
+            isInstalled: installed
         )
     }
 

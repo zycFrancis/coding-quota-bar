@@ -46,6 +46,7 @@ private enum BrandLogosCache {
     static let codex: NSImage = makeImage(svg: codexSVG)
     static let claude: NSImage = makeImage(svg: claudeSVG)
     static let kimi: NSImage = makeImage(svg: kimiSVG)
+    static let glm: NSImage = makeImage(svg: glmSVG)
     static let deepseek: NSImage = makeImage(svg: deepseekSVG)
     static let grok: NSImage = makeImage(svg: grokSVG)
     static let gemini: NSImage = makeImage(svg: geminiSVG)
@@ -55,6 +56,7 @@ private enum BrandLogosCache {
         case .codex: codex
         case .claude: claude
         case .kimi: kimi
+        case .glm: glm
         case .deepseek: deepseek
         case .grok: grok
         case .gemini: gemini
@@ -81,6 +83,10 @@ private enum BrandLogosCache {
 
     private static let kimiSVG = """
     <svg viewBox="1 0 22 20" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path fill="#458CFF" d="M21.846 0a1.923 1.923 0 110 3.846H20.15a.226.226 0 01-.227-.226V1.923C19.923.861 20.784 0 21.846 0z"/><path fill="#458CFF" d="M11.065 11.199l7.257-7.2c.137-.136.06-.41-.116-.41H14.3a.164.164 0 00-.117.051l-7.82 7.756c-.122.12-.302.013-.302-.179V3.82c0-.127-.083-.23-.185-.23H3.186c-.103 0-.186.103-.186.23V19.77c0 .128.083.23.186.23h2.69c.103 0 .186-.102.186-.23v-3.25c0-.069.025-.135.069-.178l2.424-2.406a.158.158 0 01.205-.023l6.484 4.772a7.677 7.677 0 003.453 1.283c.108.012.2-.095.2-.23v-3.06c0-.117-.07-.212-.164-.227a5.028 5.028 0 01-2.027-.807l-5.613-4.064c-.117-.078-.132-.279-.028-.381z"/></svg>
+    """
+
+    private static let glmSVG = """
+    <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="22" height="22" rx="6" fill="#4D6BFE"/><path fill="#FFFFFF" d="M7.2 17V7h1.7l5.4 7.1V7H16v10h-1.7L8.9 9.9V17z"/></svg>
     """
 
     private static let deepseekSVG = """

@@ -19,6 +19,7 @@ final class AppModel: ObservableObject {
     private let codexClient = CodexUsageClient()
     private let deepSeekClient = DeepSeekBalanceClient()
     private let kimiClient = KimiUsageClient()
+    private let glmClient = GlmUsageClient()
     private let antigravityClient = AntigravityUsageClient()
     private var scheduledRefresh: Task<Void, Never>?
     private var latestRelease: LatestRelease?
@@ -192,6 +193,35 @@ final class AppModel: ObservableObject {
                             "Local Codex snapshot (account sync unavailable)"
                         )
                     }
+                }
+            }
+        }
+
+        if
+            bundle.glm.isInstalled,
+            !preferences.hiddenProviders.contains(.glm),
+            !preferences.pausedProviders.contains(.glm)
+        {
+            do {
+                let usage = try await glmClient.fetchIfNeeded(force: forceRemote)
+                if let index = merged.firstIndex(where: { $0.id == .glm }) {
+                    merged[index].limits = usage.limits
+                    merged[index].lastUpdated = usage.fetchedAt
+                    if !usage.plan.isEmpty,
+                       !merged[index].detail.localizedCaseInsensitiveContains(usage.plan) {
+                        merged[index].detail = "\(usage.plan) · \(merged[index].detail)"
+                    }
+                    if usage.limits.isEmpty {
+                        merged[index].detail = currentLanguage.text(
+                            "额度服务暂未返回可展示窗口",
+                            "The quota service returned no displayable window"
+                        )
+                    }
+                }
+            } catch {
+                if let index = merged.firstIndex(where: { $0.id == .glm }) {
+                    merged[index].activity = .needsAttention
+                    merged[index].detail = glmError(error, language: currentLanguage)
                 }
             }
         }
@@ -455,6 +485,34 @@ final class AppModel: ObservableObject {
             }
         }
         return language.text("Kimi 额度同步失败", "Kimi quota sync failed")
+    }
+
+    private func glmError(_ error: Error, language: AppLanguage) -> String {
+        if let clientError = error as? GlmUsageClient.ClientError {
+            switch clientError {
+            case .missingCredential:
+                return language.text(
+                    "GLM 凭证缺失：设置 ZAI_CODING_CN_API_KEY 或写入 ~/.dsh/.credentials.yaml",
+                    "GLM credential missing: set ZAI_CODING_CN_API_KEY or ~/.dsh/.credentials.yaml"
+                )
+            case .invalidCredential:
+                return language.text(
+                    "GLM API Key 无效，请检查 ZAI Coding Plan Key",
+                    "GLM API key invalid; check your Z.AI Coding Plan key"
+                )
+            case .invalidResponse(let message):
+                return language.text(
+                    "GLM 额度响应异常：\(message)",
+                    "GLM quota response error: \(message)"
+                )
+            case .http(let status):
+                return language.text(
+                    "GLM 额度服务返回 HTTP \(status)",
+                    "GLM quota service returned HTTP \(status)"
+                )
+            }
+        }
+        return language.text("GLM 额度同步失败", "GLM quota sync failed")
     }
 
     private func deepSeekError(_ error: Error, language: AppLanguage) -> String {

@@ -4,6 +4,7 @@ enum ProviderID: String, CaseIterable, Identifiable, Sendable {
     case codex
     case claude
     case kimi
+    case glm
     case deepseek
     case grok
     case gemini
@@ -15,6 +16,7 @@ enum ProviderID: String, CaseIterable, Identifiable, Sendable {
         case .codex: "Codex"
         case .claude: "Claude"
         case .kimi: "Kimi"
+        case .glm: "GLM"
         case .deepseek: "DeepSeek"
         case .grok: "Grok"
         case .gemini: "Antigravity"
@@ -28,6 +30,7 @@ enum ProviderID: String, CaseIterable, Identifiable, Sendable {
         case .codex: "chevron.left.forwardslash.chevron.right"
         case .claude: "sparkles"
         case .kimi: "moon.stars.fill"
+        case .glm: "bolt.fill"
         case .deepseek: "water.waves"
         case .grok: "xmark.seal"
         case .gemini: "sparkle"
@@ -41,6 +44,7 @@ enum ProviderID: String, CaseIterable, Identifiable, Sendable {
         case .codex: "#5FD4AB"
         case .claude: "#F09C63"
         case .kimi: "#8CA8FF"
+        case .glm: "#4D6BFE"
         case .deepseek: "#59C2F5"
         case .grok: "#C7D2E8"
         case .gemini: "#8AB4F8"
