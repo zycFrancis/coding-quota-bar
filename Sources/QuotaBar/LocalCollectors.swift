@@ -434,7 +434,11 @@ enum LocalCollectors {
         language: AppLanguage
     ) -> ProviderSnapshot {
         let root = home.appending(path: ".kimi-code/sessions")
+        // CLI 未装但凭证文件存在时同样视为已安装：
+        // KimiUsageClient 只需要 ~/.kimi-code/credentials/kimi-code.json 即可拉取官方额度。
         let installed = fm.fileExists(atPath: home.appending(path: ".kimi-code/bin/kimi").path)
+            || fm.fileExists(atPath: home.appending(path: ".kimi-code/credentials/kimi-code.json").path)
+            || fm.fileExists(atPath: home.appending(path: ".kimi/credentials/kimi-code.json").path)
         let isRunning = containsStandaloneProcess("kimi", in: processText)
         let latestWire = latestFile(in: root, named: "wire.jsonl", suffix: nil)
         var detail = installed
