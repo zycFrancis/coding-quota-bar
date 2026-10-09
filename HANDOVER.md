@@ -3,6 +3,8 @@
 本轮日期：2026-10-08/09。上游 [pumpkinpieuncle/quota-bar](https://github.com/pumpkinpieuncle/quota-bar) v1.4.0。
 
 ## 本轮事实
+- **2026-10-10 全面 review + v1.4.6**：审查全部改动（977+/187-），修复两处：设置窗 level .floating→.normal（正常窗口层级）、已开设置窗时点卡片"管理"现在会重建并切到对应 tab。CI swift test 37 项全过，装机验证 6×200+1×304 零失败。记录项（不改）：GLM limits 空数组防御分支为死代码（parseResponse 保证非空）；GlmCredentialStore memo 为进程级缓存（改凭证需重启）。
+- **remote 坑**：standalone remote 曾误指旧 fork zycFrancis/quota-bar（fork 删除因缺 delete_repo scope 未成功，仍占 quota-bar 名），导致 v1.4.6 一度推错仓库、dispatch 跑了旧 main；已改指 coding-quota-bar 并修正。**待办：用户授权 `gh auth refresh -h github.com -s delete_repo` 后删 fork，再 `gh repo rename quota-bar`，并同步 Updater.repo/README 引用后发一版**。
 - **独立公开仓库**：[zycFrancis/quota-bar](https://github.com/zycFrancis/quota-bar)（main=glm-provider 全历史，v1.4.5 release 已建，Actions 已启用）；Updater.repo 已改指新仓库（待下次发版生效）。旧 fork zycFrancis/quota-bar 保留用于 rebase 上游。
 
 - fork `zycFrancis/quota-bar`，分支 `glm-provider`，新增 **GLM Coding Plan** provider，发布 v1.4.1；随后修复 Kimi 安装判定（v1.4.2）；v1.4.3 新增右键下拉面板与透明度/宽度设置；v1.4.4 左键改为打开独立设置窗口；v1.4.5 修复 GLM 重置时间解析。
