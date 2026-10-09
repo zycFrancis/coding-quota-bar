@@ -64,6 +64,16 @@ final class AppPreferences: ObservableObject {
         didSet { defaults.set(lowQuotaThreshold, forKey: Keys.lowQuotaThreshold) }
     }
 
+    /// 面板背景不透明度（0.35–1.0），同时作用于浮窗与右键下拉面板。
+    @Published var panelOpacity: Double {
+        didSet { defaults.set(panelOpacity, forKey: Keys.panelOpacity) }
+    }
+
+    /// 右键下拉面板的宽度（pt）。
+    @Published var popoverWidth: Double {
+        didSet { defaults.set(popoverWidth, forKey: Keys.popoverWidth) }
+    }
+
     @Published var hudEnabled: Bool {
         didSet { defaults.set(hudEnabled, forKey: Keys.hudEnabled) }
     }
@@ -98,6 +108,8 @@ final class AppPreferences: ObservableObject {
         static let hudToken = "hudToken"
 
         static let panelTopLeft = "panelTopLeft"
+        static let panelOpacity = "panelOpacity"
+        static let popoverWidth = "popoverWidth"
 
         static func panelSize(_ mode: PanelLayoutMode) -> String {
             "panelSize.\(mode.rawValue)"
@@ -131,6 +143,14 @@ final class AppPreferences: ObservableObject {
         customRefreshSeconds = savedSeconds == 0
             ? 120
             : min(max(savedSeconds, 10), 86_400)
+
+        let savedOpacity = defaults.double(forKey: Keys.panelOpacity)
+        panelOpacity = savedOpacity == 0 ? 1.0 : min(max(savedOpacity, 0.35), 1.0)
+
+        let savedPopoverWidth = defaults.double(forKey: Keys.popoverWidth)
+        popoverWidth = savedPopoverWidth == 0
+            ? 340
+            : min(max(savedPopoverWidth, 260), 560)
 
         if
             let raw = defaults.string(forKey: Keys.quotaWindow),

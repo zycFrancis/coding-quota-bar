@@ -1,12 +1,12 @@
 # HANDOVER — quota-bar（zycFrancis fork）
 
-本轮日期：2026-10-08。上游 [pumpkinpieuncle/quota-bar](https://github.com/pumpkinpieuncle/quota-bar) v1.4.0。
+本轮日期：2026-10-08/09。上游 [pumpkinpieuncle/quota-bar](https://github.com/pumpkinpieuncle/quota-bar) v1.4.0。
 
 ## 本轮事实
 
-- fork `zycFrancis/quota-bar`，分支 `glm-provider`，新增 **GLM Coding Plan** provider，发布 v1.4.1（tag 342c412）。
-- 已安装并运行于本机 `/Applications/Quota Bar.app`（v1.4.1，ad-hoc 签名，SHA256 校验通过）。
-- 五家剩余额度全部可见：Codex、Claude、Kimi、GLM、DeepSeek。
+- fork `zycFrancis/quota-bar`，分支 `glm-provider`，新增 **GLM Coding Plan** provider，发布 v1.4.1；随后修复 Kimi 安装判定，发布 **v1.4.2（当前装机版）**。
+- 本机 `/Applications/Quota Bar.app`（v1.4.2）运行中，五家剩余额度全部可见：Codex、Claude、Kimi、GLM、DeepSeek。
+- v1.4.2 修复：`collectKimi` 原本只认 `~/.kimi-code/bin/kimi` CLI 二进制，本机没装 CLI 导致 Kimi 永远"未发现"；现凭证文件存在即视为已安装。验证：`~/.quotabar/kimi-usage.json` 落盘（plan Allegro，5h 100/100）。
 
 ## 关键改动
 

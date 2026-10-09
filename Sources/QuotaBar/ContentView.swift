@@ -47,9 +47,9 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            VisualEffectBackground()
+            VisualEffectBackground(alphaValue: preferences.panelOpacity)
             Color(red: 0.045, green: 0.052, blue: 0.066)
-                .opacity(0.9)
+                .opacity(0.9 * preferences.panelOpacity)
             LinearGradient(
                 colors: [
                     Color.white.opacity(0.07),
@@ -969,6 +969,8 @@ private struct SettingsOverlay: View {
                 menuBarDisplayRow
                 warningRow
                 layoutRow
+                opacityRow
+                popoverWidthRow
                 hudRow
             }
         }
@@ -1015,6 +1017,32 @@ private struct SettingsOverlay: View {
             .onChange(of: preferences.language) { _, _ in
                 model.preferencesChanged(languageChanged: true)
             }
+        }
+    }
+
+    private var opacityRow: some View {
+        settingRow(
+            title: language.text("面板透明度", "Panel opacity"),
+            detail: language.text(
+                "浮窗与右键下拉面板的背景不透明度",
+                "Background opacity of the panel and the right-click popover"
+            )
+        ) {
+            Slider(value: $preferences.panelOpacity, in: 0.35...1.0, step: 0.05)
+                .frame(width: 140)
+        }
+    }
+
+    private var popoverWidthRow: some View {
+        settingRow(
+            title: language.text("下拉面板宽度", "Popover width"),
+            detail: language.text(
+                "右键状态栏图标的纵向列表宽度",
+                "Width of the vertical list opened from the status icon"
+            )
+        ) {
+            Slider(value: $preferences.popoverWidth, in: 260...560, step: 20)
+                .frame(width: 140)
         }
     }
 
@@ -1616,16 +1644,112 @@ private struct ManagerButtonStyle: ButtonStyle {
     }
 }
 
+/// 右键状态栏图标的下拉面板：各 provider 纵向排列，
+/// 点击面板外任意位置自动收起（NSPopover transient 行为）。
+struct QuotaPopoverContent: View {
+    let model: AppModel
+    let onOpenPanel: () -> Void
+    let onOpenMenu: () -> Void
+
+    @ObservedObject private var preferences: AppPreferences
+
+    private var language: AppLanguage { preferences.language }
+
+    init(
+        model: AppModel,
+        onOpenPanel: @escaping () -> Void,
+        onOpenMenu: @escaping () -> Void = {}
+    ) {
+        self.model = model
+        self.onOpenPanel = onOpenPanel
+        self.onOpenMenu = onOpenMenu
+        _preferences = ObservedObject(wrappedValue: model.preferences)
+    }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Text(language.text("额度总览", "Quotas"))
+                    .font(.system(size: 12.5, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.92))
+                Spacer(minLength: 6)
+                Button {
+                    Task { await model.refresh(forceRemote: true) }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.76))
+                        .frame(width: 24, height: 22)
+                }
+                .buttonStyle(HeaderButtonStyle())
+                .help(language.text("立即刷新", "Refresh now"))
+                Button(action: onOpenPanel) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.76))
+                        .frame(width: 24, height: 22)
+                }
+                .buttonStyle(HeaderButtonStyle())
+                .help(language.text("打开主面板与设置", "Open panel & settings"))
+                Button(action: onOpenMenu) {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.76))
+                        .frame(width: 24, height: 22)
+                }
+                .buttonStyle(HeaderButtonStyle())
+                .help(language.text("更多操作（退出、更新检查等）", "More actions (quit, update check…)"))
+            }
+
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(spacing: 10) {
+                    ForEach(model.visibleSnapshots) { snapshot in
+                        ProviderCard(
+                            snapshot: snapshot,
+                            language: language,
+                            quotaWindow: preferences.quotaWindow,
+                            lowQuotaThreshold: preferences.lowQuotaThreshold,
+                            installClaudeCollector: model.installClaudeCollector,
+                            manageProviders: onOpenPanel
+                        )
+                    }
+                }
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .background(
+            ZStack {
+                VisualEffectBackground(alphaValue: preferences.panelOpacity)
+                Color(red: 0.045, green: 0.052, blue: 0.066)
+                    .opacity(0.9 * preferences.panelOpacity)
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.white.opacity(0.14), lineWidth: 0.8)
+        }
+        .environment(\.colorScheme, .dark)
+    }
+}
+
 private struct VisualEffectBackground: NSViewRepresentable {
+    var alphaValue: Double = 1.0
+
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
         view.material = .hudWindow
         view.blendingMode = .behindWindow
         view.state = .active
+        view.alphaValue = alphaValue
         return view
     }
 
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.alphaValue = alphaValue
+    }
 }
 
 private struct HeaderButtonStyle: ButtonStyle {

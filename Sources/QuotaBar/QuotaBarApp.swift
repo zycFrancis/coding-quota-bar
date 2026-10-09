@@ -191,6 +191,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var panelContainer: NSView?
     private var statusItem: NSStatusItem?
     private var statusMenu: NSMenu?
+    /// 右键状态栏图标的纵向额度下拉面板。
+    private var quotaPopover: NSPopover?
     private var toggleMenuItem: NSMenuItem?
     private var refreshMenuItem: NSMenuItem?
     private var updateMenuItem: NSMenuItem?
@@ -759,15 +761,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
     @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
         if NSApp.currentEvent?.type == .rightMouseUp {
-            updateMenuTitles()
-            statusMenu?.popUp(
-                positioning: nil,
-                at: NSPoint(x: 0, y: sender.bounds.minY - 4),
-                in: sender
-            )
+            toggleQuotaPopover(from: sender)
         } else {
             togglePanel()
         }
+    }
+
+    /// 右键：在状态栏图标下方弹出各 provider 纵向排列的下拉面板，
+    /// 点击面板外任意位置自动收起（transient）。
+    private func toggleQuotaPopover(from sender: NSStatusBarButton) {
+        if let popover = quotaPopover, popover.isShown {
+            popover.performClose(nil)
+            return
+        }
+        let content = QuotaPopoverContent(
+            model: model,
+            onOpenPanel: { [weak self] in
+                self?.quotaPopover?.performClose(nil)
+                self?.showPanel()
+            },
+            onOpenMenu: { [weak self] in
+                self?.quotaPopover?.performClose(nil)
+                self?.updateMenuTitles()
+                if let button = self?.statusItem?.button {
+                    self?.statusMenu?.popUp(
+                        positioning: nil,
+                        at: NSPoint(x: 0, y: button.bounds.minY - 4),
+                        in: button
+                    )
+                }
+            }
+        )
+        let hosting = NSHostingView(rootView: content)
+        let width = model.preferences.popoverWidth
+        hosting.setFrameSize(NSSize(width: width, height: 0))
+        let fitting = hosting.fittingSize
+        let maxHeight = (sender.window?.screen?.visibleFrame.height ?? 900) * 0.72
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.animates = true
+        let controller = NSViewController()
+        controller.view = hosting
+        popover.contentViewController = controller
+        popover.contentSize = NSSize(
+            width: width,
+            height: min(max(fitting.height, 180), maxHeight)
+        )
+        quotaPopover = popover
+        popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
     }
 
     private func collapsePanel() {
