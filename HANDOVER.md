@@ -3,7 +3,7 @@
 本轮日期：2026-10-08/09。上游 [pumpkinpieuncle/quota-bar](https://github.com/pumpkinpieuncle/quota-bar) v1.4.0。
 
 ## 本轮事实
-- **独立公开仓库**：[zycFrancis/quota-bar-glm](https://github.com/zycFrancis/quota-bar-glm)（main=glm-provider 全历史，v1.4.5 release 已建，Actions 已启用）；Updater.repo 已改指新仓库（待下次发版生效）。旧 fork zycFrancis/quota-bar 保留用于 rebase 上游。
+- **独立公开仓库**：[zycFrancis/coding-quota-bar](https://github.com/zycFrancis/coding-quota-bar)（main=glm-provider 全历史，v1.4.5 release 已建，Actions 已启用）；Updater.repo 已改指新仓库（待下次发版生效）。旧 fork zycFrancis/quota-bar 保留用于 rebase 上游。
 
 - fork `zycFrancis/quota-bar`，分支 `glm-provider`，新增 **GLM Coding Plan** provider，发布 v1.4.1；随后修复 Kimi 安装判定（v1.4.2）；v1.4.3 新增右键下拉面板与透明度/宽度设置；v1.4.4 左键改为打开独立设置窗口；v1.4.5 修复 GLM 重置时间解析。
 - 本机 `/Applications/Quota Bar.app`（**v1.4.5 当前版**）运行中，五家剩余额度全部可见：Codex、Claude、Kimi、GLM、DeepSeek。
