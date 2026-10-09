@@ -25,7 +25,7 @@ struct LatestRelease: Sendable {
 /// Sparkle was deliberately skipped — the release pipeline already publishes
 /// zips, the app is not sandboxed, and a ~2 MB download needs no deltas.
 enum AppUpdater {
-    static let repo = "zycFrancis/coding-quota-bar"
+    static let repo = "zycFrancis/quota-bar"
 
     /// Self-update only makes sense when running from a real .app bundle.
     static var canSelfUpdate: Bool {

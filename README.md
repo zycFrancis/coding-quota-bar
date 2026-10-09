@@ -1,8 +1,8 @@
-# Coding Quota Bar
+# Quota Bar
 
 macOS 菜单栏 AI 编码额度监控——**Codex、Claude、Kimi、GLM（智谱）、DeepSeek 五家剩余额度一屏尽览**。
 
-基于开源项目 [pumpkinpieuncle/quota-bar](https://github.com/pumpkinpieuncle/quota-bar) 改造：新增 GLM Coding Plan 支持、右键纵向下拉面板、独立设置窗口、透明度调节。上游不含 GLM 且交互形态不同，故维护此独立分支（原名 Quota Bar GLM，因覆盖远不止 GLM 而更名）。上游原版说明见 [README.upstream.md](README.upstream.md)。
+基于开源项目 [pumpkinpieuncle/quota-bar](https://github.com/pumpkinpieuncle/quota-bar) 改造：新增 GLM Coding Plan 支持、右键纵向下拉面板、独立设置窗口、透明度调节。上游不含 GLM 且交互形态不同，故维护此独立分支。上游原版说明见 [README.upstream.md](README.upstream.md)。
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-Silver) ![Apple Silicon](https://img.shields.io/badge/arch-Apple%20Silicon-blue) ![License MIT](https://img.shields.io/badge/license-MIT-green)
 
@@ -18,7 +18,7 @@ macOS 菜单栏 AI 编码额度监控——**Codex、Claude、Kimi、GLM（智�
 
 ## 安装
 
-1. 从 [Releases](https://github.com/zycFrancis/coding-quota-bar/releases) 下载最新 DMG，校验同目录 `SHA256SUMS.txt`；
+1. 从 [Releases](https://github.com/zycFrancis/quota-bar/releases) 下载最新 DMG，校验同目录 `SHA256SUMS.txt`；
 2. 将 `Quota Bar.app` 拖入"应用程序"；
 3. 首次打开若提示"无法验证开发者"：系统设置 → 隐私与安全性 → 仍要打开（本应用为 ad-hoc 签名，未做 Apple 公证）。
 
@@ -48,7 +48,7 @@ macOS 菜单栏 AI 编码额度监控——**Codex、Claude、Kimi、GLM（智�
 ## 从源码构建
 
 ```bash
-git clone https://github.com/zycFrancis/coding-quota-bar.git
+git clone https://github.com/zycFrancis/quota-bar.git
 cd quota-bar-glm
 ./scripts/build-app.sh
 ```

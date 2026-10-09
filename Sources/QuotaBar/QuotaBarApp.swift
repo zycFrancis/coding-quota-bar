@@ -773,13 +773,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     }
 
     /// 左键：打开独立设置窗口（正常弹窗，不再挂在浮窗上）。
-    /// 已打开则前置激活。浮窗开关仍保留在 ⌥⌘Q 与"…"菜单里。
+    /// 已打开且目标 tab 相同则前置激活；请求不同 tab 时重建以切换页面。
+    /// 浮窗开关仍保留在 ⌥⌘Q 与"…"菜单里。
     private func openSettingsWindow(initialTab: SettingsTab = .general) {
-        if let window = settingsWindow, window.isVisible {
+        if
+            let window = settingsWindow,
+            window.isVisible,
+            initialTab == .general
+        {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
+        settingsWindow?.orderOut(nil)
         let content = SettingsPanelContent(
             model: model,
             initialTab: initialTab,
@@ -797,7 +803,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         window.title = "Quota Bar"
         window.contentView = hosting
         window.isReleasedWhenClosed = false
-        window.level = .floating
+        // .normal：普通弹窗层级，切换到其他应用时正常退后，
+        // 而不是像 .floating 一样永远浮在最前。
+        window.level = .normal
         // 出现在状态栏图标下方，水平方向夹在屏幕内。
         if
             let button = statusItem?.button,
