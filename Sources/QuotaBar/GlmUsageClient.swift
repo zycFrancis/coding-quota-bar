@@ -239,7 +239,7 @@ actor GlmUsageClient {
         // GLM 的 percentage 是已用百分比，剩余 = 100 - 已用。
         guard let usedPercent = number(item["percentage"]) else { return nil }
         let remaining = min(max(100 - usedPercent, 0), 100)
-        let resetAt = (item["nextResetTime"] as? String).flatMap(Self.date)
+        let resetAt = Self.resetDate(item["nextResetTime"])
         return LimitWindow(
             id: id,
             label: label,
@@ -247,6 +247,20 @@ actor GlmUsageClient {
             resetAt: resetAt,
             windowMinutes: minutes
         )
+    }
+
+    /// 线上形态是 Unix 毫秒时间戳（如 1791547256894）；
+    /// 兼容历史/国际端的 ISO 8601 字符串。
+    private static func resetDate(_ value: Any?) -> Date? {
+        if let timestamp = number(value), timestamp > 0 {
+            // 大于 1e12 视为毫秒，否则按秒。
+            let seconds = timestamp > 1e12 ? timestamp / 1_000 : timestamp
+            return Date(timeIntervalSince1970: seconds)
+        }
+        if let iso = value as? String, !iso.isEmpty {
+            return date(iso)
+        }
+        return nil
     }
 
     private static func number(_ value: Any?) -> Double? {
