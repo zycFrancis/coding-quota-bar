@@ -4,9 +4,10 @@
 
 ## 本轮事实
 
-- fork `zycFrancis/quota-bar`，分支 `glm-provider`，新增 **GLM Coding Plan** provider，发布 v1.4.1；随后修复 Kimi 安装判定，发布 **v1.4.2（当前装机版）**。
-- 本机 `/Applications/Quota Bar.app`（v1.4.2）运行中，五家剩余额度全部可见：Codex、Claude、Kimi、GLM、DeepSeek。
+- fork `zycFrancis/quota-bar`，分支 `glm-provider`，新增 **GLM Coding Plan** provider，发布 v1.4.1；随后修复 Kimi 安装判定（v1.4.2）；v1.4.3 新增右键下拉面板与透明度/宽度设置。
+- 本机 `/Applications/Quota Bar.app`（**v1.4.3 当前版**）运行中，五家剩余额度全部可见：Codex、Claude、Kimi、GLM、DeepSeek。
 - v1.4.2 修复：`collectKimi` 原本只认 `~/.kimi-code/bin/kimi` CLI 二进制，本机没装 CLI 导致 Kimi 永远"未发现"；现凭证文件存在即视为已安装。验证：`~/.quotabar/kimi-usage.json` 落盘（plan Allegro，5h 100/100）。
+- v1.4.3 交互改造：右键状态栏图标 → NSPopover 纵向额度列表（transient，点外自动收起）；原右键 NSMenu 移到面板"…"按钮（保留退出/更新检查等唯一入口）；新增偏好 `panelOpacity`（0.35–1.0，作用于浮窗+下拉面板背景，含 VisualEffectBackground alphaValue）与 `popoverWidth`（260–560pt），设置 → 通用 有滑杆；浮窗尺寸仍靠拖拽边缘。
 
 ## 关键改动
 

@@ -28,22 +28,23 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
 struct ContentView: View {
     @ObservedObject var model: AppModel
-    @ObservedObject private var preferences: AppPreferences
-    @State private var showSettings = false
-    @State private var settingsTab: SettingsTab = .general
+    let onOpenSettings: (SettingsTab) -> Void
     let onHideToMenuBar: () -> Void
     let onResetGeometry: () -> Void
 
     init(
         model: AppModel,
+        onOpenSettings: @escaping (SettingsTab) -> Void = { _ in },
         onHideToMenuBar: @escaping () -> Void = {},
         onResetGeometry: @escaping () -> Void = {}
     ) {
         self.model = model
+        self.onOpenSettings = onOpenSettings
         self.onHideToMenuBar = onHideToMenuBar
         self.onResetGeometry = onResetGeometry
         _preferences = ObservedObject(wrappedValue: model.preferences)
     }
+    @ObservedObject private var preferences: AppPreferences
 
     var body: some View {
         ZStack {
@@ -72,20 +73,6 @@ struct ContentView: View {
                 .padding(14)
             }
 
-            if showSettings, preferences.panelLayout == .standard {
-                Color.black.opacity(0.65)
-                    .clipShape(RoundedRectangle(cornerRadius: panelCornerRadius, style: .continuous))
-                    .transition(.opacity)
-
-                SettingsOverlay(
-                    model: model,
-                    isPresented: $showSettings,
-                    selectedTab: $settingsTab,
-                    onResetGeometry: onResetGeometry
-                )
-                    .padding(10)
-                    .transition(.scale(scale: 0.96).combined(with: .opacity))
-            }
         }
         // The panel is user-resizable, so the content always fills whatever
         // frame the window currently has instead of pinning its own size.
@@ -155,7 +142,7 @@ struct ContentView: View {
             Spacer(minLength: 4)
 
             Button {
-                showSettings.toggle()
+                onOpenSettings(.general)
             } label: {
                 Image(systemName: "gearshape")
                     .font(.system(size: 12, weight: .semibold))
@@ -223,8 +210,7 @@ struct ContentView: View {
                             lowQuotaThreshold: preferences.lowQuotaThreshold,
                             installClaudeCollector: model.installClaudeCollector,
                             manageProviders: {
-                                settingsTab = .providers
-                                showSettings = true
+                                onOpenSettings(.providers)
                             }
                         )
                     }
@@ -838,12 +824,13 @@ private struct TabItemButton: View {
     }
 }
 
-private struct SettingsOverlay: View {
+/// 独立设置窗口内容：不再挂在浮窗上，由 AppDelegate 以普通 NSWindow 承载。
+struct SettingsPanelContent: View {
     @ObservedObject var model: AppModel
     @ObservedObject private var preferences: AppPreferences
     @ObservedObject private var hud: HUDBridge
-    @Binding var isPresented: Bool
-    @Binding var selectedTab: SettingsTab
+    @State private var selectedTab: SettingsTab
+    let onClose: () -> Void
     let onResetGeometry: () -> Void
     @State private var copiedHUDURL = false
     @State private var launchAtLoginError: String?
@@ -851,15 +838,15 @@ private struct SettingsOverlay: View {
 
     init(
         model: AppModel,
-        isPresented: Binding<Bool>,
-        selectedTab: Binding<SettingsTab>,
+        initialTab: SettingsTab = .general,
+        onClose: @escaping () -> Void,
         onResetGeometry: @escaping () -> Void
     ) {
         self.model = model
         _preferences = ObservedObject(wrappedValue: model.preferences)
         _hud = ObservedObject(wrappedValue: model.hud)
-        _isPresented = isPresented
-        _selectedTab = selectedTab
+        _selectedTab = State(initialValue: initialTab)
+        self.onClose = onClose
         self.onResetGeometry = onResetGeometry
     }
 
@@ -894,13 +881,14 @@ private struct SettingsOverlay: View {
                 Spacer(minLength: 4)
 
                 Button {
-                    isPresented = false
+                    onClose()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 10, weight: .bold))
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(HeaderButtonStyle())
+                .help(language.text("关闭", "Close"))
             }
 
             Group {
@@ -918,14 +906,20 @@ private struct SettingsOverlay: View {
         .padding(15)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(red: 0.085, green: 0.095, blue: 0.115))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
-                }
+            ZStack {
+                // 独立 NSWindow 不再继承浮窗的深色环境，这里自带背景。
+                Color(red: 0.045, green: 0.052, blue: 0.066)
+                    .opacity(0.9 * preferences.panelOpacity)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color(red: 0.085, green: 0.095, blue: 0.115))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
+                    }
+            }
         )
         .shadow(color: .black.opacity(0.42), radius: 20, y: 8)
+        .environment(\.colorScheme, .dark)
     }
 
     private var tabPicker: some View {
@@ -1648,7 +1642,7 @@ private struct ManagerButtonStyle: ButtonStyle {
 /// 点击面板外任意位置自动收起（NSPopover transient 行为）。
 struct QuotaPopoverContent: View {
     let model: AppModel
-    let onOpenPanel: () -> Void
+    let onOpenSettings: () -> Void
     let onOpenMenu: () -> Void
 
     @ObservedObject private var preferences: AppPreferences
@@ -1657,11 +1651,11 @@ struct QuotaPopoverContent: View {
 
     init(
         model: AppModel,
-        onOpenPanel: @escaping () -> Void,
+        onOpenSettings: @escaping () -> Void,
         onOpenMenu: @escaping () -> Void = {}
     ) {
         self.model = model
-        self.onOpenPanel = onOpenPanel
+        self.onOpenSettings = onOpenSettings
         self.onOpenMenu = onOpenMenu
         _preferences = ObservedObject(wrappedValue: model.preferences)
     }
@@ -1683,14 +1677,14 @@ struct QuotaPopoverContent: View {
                 }
                 .buttonStyle(HeaderButtonStyle())
                 .help(language.text("立即刷新", "Refresh now"))
-                Button(action: onOpenPanel) {
-                    Image(systemName: "slider.horizontal.3")
+                Button(action: onOpenSettings) {
+                    Image(systemName: "gearshape")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.76))
                         .frame(width: 24, height: 22)
                 }
                 .buttonStyle(HeaderButtonStyle())
-                .help(language.text("打开主面板与设置", "Open panel & settings"))
+                .help(language.text("打开设置", "Open settings"))
                 Button(action: onOpenMenu) {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 11, weight: .semibold))
@@ -1710,7 +1704,7 @@ struct QuotaPopoverContent: View {
                             quotaWindow: preferences.quotaWindow,
                             lowQuotaThreshold: preferences.lowQuotaThreshold,
                             installClaudeCollector: model.installClaudeCollector,
-                            manageProviders: onOpenPanel
+                            manageProviders: onOpenSettings
                         )
                     }
                 }

@@ -193,6 +193,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var statusMenu: NSMenu?
     /// 右键状态栏图标的纵向额度下拉面板。
     private var quotaPopover: NSPopover?
+    /// 左键状态栏图标打开的独立设置窗口。
+    private var settingsWindow: NSWindow?
     private var toggleMenuItem: NSMenuItem?
     private var refreshMenuItem: NSMenuItem?
     private var updateMenuItem: NSMenuItem?
@@ -340,6 +342,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         let hostingView = NSHostingView(
             rootView: ContentView(
                 model: model,
+                onOpenSettings: { [weak self] tab in
+                    self?.openSettingsWindow(initialTab: tab)
+                },
                 onHideToMenuBar: { [weak self] in self?.collapsePanel() },
                 onResetGeometry: { [weak self] in self?.resetPanelGeometry() }
             )
@@ -763,8 +768,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         if NSApp.currentEvent?.type == .rightMouseUp {
             toggleQuotaPopover(from: sender)
         } else {
-            togglePanel()
+            openSettingsWindow()
         }
+    }
+
+    /// 左键：打开独立设置窗口（正常弹窗，不再挂在浮窗上）。
+    /// 已打开则前置激活。浮窗开关仍保留在 ⌥⌘Q 与"…"菜单里。
+    private func openSettingsWindow(initialTab: SettingsTab = .general) {
+        if let window = settingsWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let content = SettingsPanelContent(
+            model: model,
+            initialTab: initialTab,
+            onClose: { [weak self] in
+                self?.settingsWindow?.orderOut(nil)
+            },
+            onResetGeometry: { [weak self] in
+                self?.resetPanelGeometry()
+            }
+        )
+        let hosting = NSHostingView(rootView: content)
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 560),
+                              styleMask: [.titled, .closable],
+                              backing: .buffered, defer: false)
+        window.title = "Quota Bar"
+        window.contentView = hosting
+        window.isReleasedWhenClosed = false
+        window.level = .floating
+        // 出现在状态栏图标下方，水平方向夹在屏幕内。
+        if
+            let button = statusItem?.button,
+            let buttonWindow = button.window,
+            let screen = buttonWindow.screen
+        {
+            let iconRect = buttonWindow.convertToScreen(
+                button.convert(button.bounds, to: nil)
+            )
+            var topLeft = NSPoint(
+                x: iconRect.midX - window.frame.width / 2,
+                y: iconRect.minY
+            )
+            topLeft.x = max(screen.visibleFrame.minX,
+                            min(topLeft.x, screen.visibleFrame.maxX - window.frame.width))
+            window.setFrameTopLeftPoint(topLeft)
+        } else {
+            window.center()
+        }
+        settingsWindow = window
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     /// 右键：在状态栏图标下方弹出各 provider 纵向排列的下拉面板，
@@ -776,9 +831,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         }
         let content = QuotaPopoverContent(
             model: model,
-            onOpenPanel: { [weak self] in
+            onOpenSettings: { [weak self] in
                 self?.quotaPopover?.performClose(nil)
-                self?.showPanel()
+                self?.openSettingsWindow()
             },
             onOpenMenu: { [weak self] in
                 self?.quotaPopover?.performClose(nil)
