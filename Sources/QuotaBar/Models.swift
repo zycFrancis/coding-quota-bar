@@ -223,6 +223,7 @@ enum QuotaWindowPreference: String, CaseIterable, Identifiable, Sendable {
 }
 
 enum MenuBarDisplayMode: String, CaseIterable, Identifiable, Sendable {
+    case icon
     case automatic
     case full
     case scrolling
@@ -231,6 +232,7 @@ enum MenuBarDisplayMode: String, CaseIterable, Identifiable, Sendable {
 
     func label(language: AppLanguage) -> String {
         switch self {
+        case .icon: language.text("小图标", "Icon")
         case .automatic: language.text("自动", "Auto")
         case .full: language.text("完整", "Full")
         case .scrolling: language.text("滚动", "Scroll")

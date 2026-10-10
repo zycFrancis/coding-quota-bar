@@ -203,7 +203,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var fiveHourMenuItem: NSMenuItem?
     private var weeklyMenuItem: NSMenuItem?
     private var monthlyMenuItem: NSMenuItem?
-    private var quotaMenuItems: [ProviderID: NSMenuItem] = [:]
     private var snapshotObservation: AnyCancellable?
     private var quotaWindowObservation: AnyCancellable?
     private var panelLayoutObservation: AnyCancellable?
@@ -497,14 +496,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         menu.addItem(settingsItem)
         menu.addItem(.separator())
 
-        for provider in ProviderID.allCases {
-            let quota = NSMenuItem(title: provider.title, action: nil, keyEquivalent: "")
-            quota.isEnabled = false
-            menu.addItem(quota)
-            quotaMenuItems[provider] = quota
-        }
-        menu.addItem(.separator())
-
         let windowMenu = NSMenu()
         let fiveHour = NSMenuItem(
             title: "",
@@ -669,11 +660,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             "顶部栏额度",
             "Menu bar quota"
         )
-        updateQuotaMenuItems(snapshots: model.snapshots)
     }
 
     private func updateStatusItem(snapshots: [ProviderSnapshot]) {
         let providers = model.preferences.visibleProviderOrder
+
+        // 小图标模式：仅 gauge 图标 + 最优 provider 的单一百分比，
+        // 宽度与其他菜单栏应用一致，避免五家摘要平铺成超宽横条。
+        if model.preferences.menuBarDisplayMode == .icon {
+            statusItem?.length = NSStatusItem.variableLength
+            if let marquee = marqueeView {
+                marquee.stop()
+                marquee.isHidden = true
+            }
+            let headline = providers
+                .compactMap { provider in
+                    snapshots.first { $0.id == provider }
+                }
+                .compactMap { snapshot in
+                    MenuBarSummary.value(
+                        snapshot: snapshot,
+                        preference: model.preferences.quotaWindow
+                    )
+                }
+                .first { $0.hasSuffix("%") }
+            statusItem?.button?.image = statusImage
+            statusItem?.button?.title = headline ?? ""
+            statusItem?.button?.toolTip = MenuBarSummary.accessibilityText(
+                snapshots: snapshots,
+                language: model.language,
+                preference: model.preferences.quotaWindow,
+                providers: providers
+            )
+            return
+        }
+
         let fullSummary = MenuBarSummary.text(
             snapshots: snapshots,
             preference: model.preferences.quotaWindow,
@@ -721,7 +742,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             preference: model.preferences.quotaWindow,
             providers: providers
         )
-        updateQuotaMenuItems(snapshots: snapshots)
     }
 
     private var statusImage: NSImage? {
@@ -745,33 +765,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         return tinted ?? image
     }
 
-    private func updateQuotaMenuItems(snapshots: [ProviderSnapshot]) {
-        if let statusMenu {
-            for provider in model.preferences.providerOrder {
-                guard let item = quotaMenuItems[provider] else { continue }
-                statusMenu.removeItem(item)
-            }
-            for (offset, provider) in model.preferences.providerOrder.enumerated() {
-                guard let item = quotaMenuItems[provider] else { continue }
-                statusMenu.insertItem(item, at: min(2 + offset, statusMenu.items.count))
-            }
-        }
-
-        for provider in model.preferences.providerOrder {
-            guard let item = quotaMenuItems[provider] else { continue }
-            let snapshot = snapshots.first { $0.id == provider }
-            let quota = snapshot.flatMap {
-                MenuBarSummary.value(
-                    snapshot: $0,
-                    preference: model.preferences.quotaWindow
-                )
-            } ?? "—"
-            let state = snapshot?.activity.label(language: model.language)
-                ?? ActivityState.offline.label(language: model.language)
-            item.title = "\(provider.title)  \(quota)  ·  \(state)"
-            item.isHidden = model.preferences.hiddenProviders.contains(provider)
-        }
-    }
 
     @objc private func togglePanel() {
         guard let panel else { return }
