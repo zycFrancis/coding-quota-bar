@@ -1046,6 +1046,9 @@ enum MenuBarSummary {
         fullSummaryWidth: CGFloat
     ) -> Bool {
         switch mode {
+        case .icon:
+            // icon 模式在 updateStatusItem 里提前返回，不会走到这里。
+            false
         case .automatic:
             fullSummaryWidth > max(160, screenWidth * 0.14)
         case .full:
