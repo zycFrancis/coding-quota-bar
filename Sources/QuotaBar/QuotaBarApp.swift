@@ -223,10 +223,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         makePanel()
         makeStatusItem()
         registerShowPanelHotKey()
+        // 自动化入口：外部（AppleScript/终端）可通过分布式通知触发菜单弹出，
+        // 便于自动化测试与无障碍脚本驱动。
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(showMenuFromAutomation(_:)),
+            name: NSNotification.Name("local.quotabar.showMenu"),
+            object: nil
+        )
         model.start()
     }
 
+    @objc private func showMenuFromAutomation(_ notification: Notification) {
+        guard let button = statusItem?.button else { return }
+        updateMenuTitles()
+        statusMenu?.popUp(
+            positioning: nil,
+            at: NSPoint(x: 0, y: button.bounds.minY - 4),
+            in: button
+        )
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
+        DistributedNotificationCenter.default().removeObserver(self)
         if let showPanelObserver {
             NotificationCenter.default.removeObserver(showPanelObserver)
         }
