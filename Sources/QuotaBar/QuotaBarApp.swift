@@ -218,7 +218,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var showPanelObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
+        // .regular：常规应用形态——Dock 图标、应用图标、系统菜单栏完整可用。
+        NSApp.setActivationPolicy(.regular)
         makeMainMenu()
         makePanel()
         makeStatusItem()
@@ -249,7 +250,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         _ sender: NSApplication,
         hasVisibleWindows flag: Bool
     ) -> Bool {
-        showPanel()
+        // 点 Dock 图标 = 弹出整个额度信息（与左键状态栏图标一致）。
+        if let button = statusItem?.button {
+            toggleQuotaPopover(from: button)
+        } else {
+            showPanel()
+        }
         return true
     }
 
@@ -260,6 +266,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         let mainMenu = NSMenu()
         let applicationItem = NSMenuItem()
         let applicationMenu = NSMenu(title: "Quota Bar")
+        let settingsItem = applicationMenu.addItem(
+            withTitle: language.text("设置…", "Settings…"),
+            action: #selector(openSettingsFromMenu), keyEquivalent: ","
+        )
+        settingsItem.target = self
         applicationMenu.addItem(
             withTitle: language.text("退出 Quota Bar", "Quit Quota Bar"),
             action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"
@@ -477,6 +488,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         toggle.target = self
         toggle.keyEquivalentModifierMask = [.command, .option]
         menu.addItem(toggle)
+        let settingsItem = NSMenuItem(
+            title: model.language.text("设置…", "Settings…"),
+            action: #selector(openSettingsFromMenu),
+            keyEquivalent: ","
+        )
+        settingsItem.target = self
+        menu.addItem(settingsItem)
         menu.addItem(.separator())
 
         for provider in ProviderID.allCases {
@@ -766,10 +784,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
     @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
         if NSApp.currentEvent?.type == .rightMouseUp {
-            toggleQuotaPopover(from: sender)
+            // 右键：标准系统菜单（白底实体菜单），含设置入口。
+            updateMenuTitles()
+            statusMenu?.popUp(
+                positioning: nil,
+                at: NSPoint(x: 0, y: sender.bounds.minY - 4),
+                in: sender
+            )
         } else {
-            openSettingsWindow()
+            // 左键：弹出整个额度信息（纵向下拉面板）。
+            toggleQuotaPopover(from: sender)
         }
+    }
+
+    @objc private func openSettingsFromMenu() {
+        openSettingsWindow()
     }
 
     /// 左键：打开独立设置窗口（正常弹窗，不再挂在浮窗上）。
@@ -842,17 +871,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             onOpenSettings: { [weak self] in
                 self?.quotaPopover?.performClose(nil)
                 self?.openSettingsWindow()
-            },
-            onOpenMenu: { [weak self] in
-                self?.quotaPopover?.performClose(nil)
-                self?.updateMenuTitles()
-                if let button = self?.statusItem?.button {
-                    self?.statusMenu?.popUp(
-                        positioning: nil,
-                        at: NSPoint(x: 0, y: button.bounds.minY - 4),
-                        in: button
-                    )
-                }
             }
         )
         let hosting = NSHostingView(rootView: content)

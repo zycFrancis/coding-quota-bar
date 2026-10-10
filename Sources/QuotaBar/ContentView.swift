@@ -1638,12 +1638,11 @@ private struct ManagerButtonStyle: ButtonStyle {
     }
 }
 
-/// 右键状态栏图标的下拉面板：各 provider 纵向排列，
+/// 左键状态栏图标的下拉面板：各 provider 纵向排列，
 /// 点击面板外任意位置自动收起（NSPopover transient 行为）。
 struct QuotaPopoverContent: View {
     let model: AppModel
     let onOpenSettings: () -> Void
-    let onOpenMenu: () -> Void
 
     @ObservedObject private var preferences: AppPreferences
 
@@ -1651,12 +1650,10 @@ struct QuotaPopoverContent: View {
 
     init(
         model: AppModel,
-        onOpenSettings: @escaping () -> Void,
-        onOpenMenu: @escaping () -> Void = {}
+        onOpenSettings: @escaping () -> Void
     ) {
         self.model = model
         self.onOpenSettings = onOpenSettings
-        self.onOpenMenu = onOpenMenu
         _preferences = ObservedObject(wrappedValue: model.preferences)
     }
 
@@ -1685,14 +1682,6 @@ struct QuotaPopoverContent: View {
                 }
                 .buttonStyle(HeaderButtonStyle())
                 .help(language.text("打开设置", "Open settings"))
-                Button(action: onOpenMenu) {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.76))
-                        .frame(width: 24, height: 22)
-                }
-                .buttonStyle(HeaderButtonStyle())
-                .help(language.text("更多操作（退出、更新检查等）", "More actions (quit, update check…)"))
             }
 
             ScrollView(.vertical, showsIndicators: false) {
